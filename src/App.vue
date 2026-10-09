@@ -1,23 +1,68 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-
-import logo from '../public/images/logo-eskatonfest.webp'
-import poster from '../public/images/poster-eskatonfest.webp'
+import { computed, onMounted, ref } from 'vue'
 
 import ArtistCard from './components/ArtistCard.vue'
 
-import { artists } from './data/artists.ts'
+import { supabase } from './utils/supabase'
+import type { ArtistWithPerformances } from './utils/interfaces'
 
 type DayFilter = 'all' | 1 | 2
 
 const selectedDay = ref<DayFilter>('all')
 
-const filteredArtists = computed(() => {
-  if (selectedDay.value === 'all') {
-    return artists
+const artists = ref<ArtistWithPerformances[]>([])
+
+const isLoading = ref(true)
+const errorMessage = ref('')
+
+async function getArtists() {
+  isLoading.value = true
+  errorMessage.value = ''
+
+  const { data, error } = await supabase
+    .from('artist')
+    .select(`
+      artist_id,
+      name,
+      image,
+      description,
+      genre,
+      performance (
+        day_id
+      )
+    `)
+    .order('name')
+
+  if (error) {
+    console.error('Erreur Supabase :', error)
+
+    errorMessage.value =
+      'Impossible de charger la programmation pour le moment.'
+
+    isLoading.value = false
+
+    return
   }
 
-  return artists.filter((artist) => artist.day === selectedDay.value)
+  artists.value = (data ?? []) as ArtistWithPerformances[]
+
+  isLoading.value = false
+}
+
+onMounted(() => {
+  getArtists()
+})
+
+const filteredArtists = computed(() => {
+  if (selectedDay.value === 'all') {
+    return artists.value
+  }
+
+  return artists.value.filter((artist) =>
+    artist.performance.some(
+      (performance) => performance.day_id === selectedDay.value
+    )
+  )
 })
 </script>
 
@@ -30,7 +75,7 @@ const filteredArtists = computed(() => {
     <header class="hero">
       <img
         class="hero__logo"
-        :src="logo"
+        src="/images/logo-eskatonfest.webp"
         alt="Eskatonfest - Goth Dark Symphonic"
       >
 
@@ -69,7 +114,6 @@ const filteredArtists = computed(() => {
       </a>
     </header>
 
-
     <main>
       <!-- ===================================================
            AFFICHE
@@ -78,11 +122,10 @@ const filteredArtists = computed(() => {
       <section class="poster-section">
         <img
           class="festival-poster"
-          :src="poster"
+          src="/images/poster-eskatonfest.webp"
           alt="Affiche officielle Eskatonfest"
         >
       </section>
-
 
       <!-- ===================================================
            PROGRAMME
@@ -102,7 +145,6 @@ const filteredArtists = computed(() => {
               Line up
             </p>
           </header>
-
 
           <!-- Filtres -->
 
@@ -141,20 +183,36 @@ const filteredArtists = computed(() => {
             </button>
           </div>
 
+          <!-- Chargement -->
+
+          <p v-if="isLoading">
+            Chargement de la programmation...
+          </p>
+
+          <!-- Erreur -->
+
+          <p
+            v-else-if="errorMessage"
+            role="alert"
+          >
+            {{ errorMessage }}
+          </p>
 
           <!-- Artistes -->
 
-          <div class="program-grid">
+          <div
+            v-else
+            class="program-grid"
+          >
             <ArtistCard
               v-for="artist in filteredArtists"
-              :key="artist.id"
+              :key="artist.artist_id"
               :artist="artist"
             />
           </div>
         </div>
       </section>
     </main>
-
 
     <!-- =====================================================
          FOOTER
@@ -170,7 +228,6 @@ const filteredArtists = computed(() => {
           Facebook
         </a>
       </div>
-
 
       <div class="newsletter">
         <h2>
@@ -196,7 +253,6 @@ const filteredArtists = computed(() => {
           </button>
         </form>
       </div>
-
 
       <a href="mailto:contact@eskatonfest.fr">
         Contact

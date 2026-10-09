@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import type { Artist } from '../types/artist'
-
-import ornamentCardTop from '../../public/images/ornament-card-top.webp'
+import type { Artist } from '../utils/interfaces'
 
 defineProps<{
   artist: Artist
@@ -11,14 +9,16 @@ defineProps<{
 <template>
   <article class="artist-card">
     <!-- Décoration gothique -->
+
     <img
       class="artist-card__ornament"
-      :src="ornamentCardTop"
+      src="/images/ornament-card-top.webp"
       alt=""
       aria-hidden="true"
     >
 
     <!-- Image artiste -->
+
     <div class="artist-card__image">
       <img
         v-if="artist.image"
@@ -33,12 +33,23 @@ defineProps<{
     </div>
 
     <!-- Informations artiste -->
+
     <div class="artist-card__content">
       <h2 class="artist-card__title">
         {{ artist.name }}
       </h2>
 
-      <p class="artist-card__description">
+      <p
+        v-if="artist.genre"
+        class="artist-card__genre"
+      >
+        {{ artist.genre }}
+      </p>
+
+      <p
+        v-if="artist.description"
+        class="artist-card__description"
+      >
         {{ artist.description }}
       </p>
     </div>
@@ -53,11 +64,6 @@ defineProps<{
 .artist-card {
   position: relative;
 
-  /*
-    L'ornement est en position absolute.
-    On réserve donc de la place au-dessus de la card
-    pour éviter qu'il remonte sur les filtres.
-  */
   margin-top: 55px;
 
   overflow: visible;
@@ -80,11 +86,9 @@ defineProps<{
 .artist-card__ornament {
   position: absolute;
 
-  /* Valeurs conservées */
   top: -55px;
   left: 50%;
 
-  /* Valeur conservée */
   width: 115%;
   max-width: none;
   height: auto;
@@ -136,9 +140,6 @@ defineProps<{
   object-fit: cover;
 }
 
-
-/* Placeholder quand l'artiste n'a pas encore d'image */
-
 .artist-card__image span {
   position: relative;
 
@@ -168,6 +169,20 @@ defineProps<{
   line-height: var(--line-height-medium);
 }
 
+.artist-card__genre {
+  margin:
+    0
+    0
+    var(--spacing-200);
+
+  color: var(--color-accent-default);
+
+  font-family: var(--font-body);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-small);
+}
+
 .artist-card__description {
   margin: 0;
 
@@ -186,15 +201,10 @@ defineProps<{
 
 @media (max-width: 600px) {
   .artist-card {
-    /*
-      Comme l'ornement remonte davantage en mobile,
-      on réserve également davantage d'espace.
-    */
     margin-top: 65px;
   }
 
   .artist-card__ornament {
-    /* Valeurs conservées */
     top: -65px;
     width: 116%;
   }
