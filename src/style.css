@@ -517,7 +517,7 @@ input {
       rgba(11, 17, 24, 0.1),
       rgba(11, 17, 24, 0.1)
     ),
-    url("./assets/images/background-eskatonfest.webp");
+    url("/images/background-eskatonfest.webp");
 
   background-size: cover;
   background-position: center;
